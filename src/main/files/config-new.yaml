@@ -1,0 +1,68 @@
+## SPDX-License-Identifier: Apache-2.0
+## Originally developed by Telicent Ltd.; subsequently adapted, enhanced, and maintained by the National Digital Twin Programme.
+##
+##  Copyright (c) Telicent Ltd.
+##
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
+##
+##      http://www.apache.org/licenses/LICENSE-2.0
+##
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
+##
+##
+##  Modifications made by the National Digital Twin Programme (NDTP)
+##  © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
+##  and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
+
+version: "1.0"
+
+server:                           ## [] rdf:type fuseki:Server ;
+  name: "Fuseki server 1"
+  port: 3131                      ## Secure Agent Graph:: port is decided elsewhere but implement field "port"
+  ## Settings possible here
+  ## Need to make a Turtle () list.
+
+## This is a list of 2 fuseki:Service
+services:
+  ## First fuseki:Server -- this will be "service1", a generated name, in config.ttl
+  - name: "/ds"                                  ## fuseki:name "/ds2"
+    endpoints:
+      ## This endpoint is just an operation
+      - operation: query
+      ## Another entry in the endpoint YAML list
+      - name: "sparql"
+        operation: query                         ##  fuseki:operation fuseki:query ;
+        settings:
+          'arq:queryTimeout': "1000,10000"
+      ## 3rd operation
+      - name: "data-update"
+        operation: update
+    database:  "mem-db"                          ##  fuseki:dataset :dataset1 named as the storage. "mem-db"
+
+  ## Second fuseki:Server
+  ## This is service 2.
+  - name: "/db2"
+    endpoints:
+      - name: "sparql"
+        operation: query                         ##  fuseki:operation fuseki:query ;
+    database : "tdb2-db" 
+
+
+# Storage. "name" are used to connect "database:" in the service to a declaration
+## Replace the name with a URI and ise 
+
+databases:
+  - name: "mem-db"
+    db-type: TIM                                   ## rdf:type ja:MemoryDataset
+
+  - name: "tdb2-db"
+    db-type: TDB2                                  ## rdf:type  tdb2:DatasetTDB2
+    location: "DB2"                                ## tdb2:location "DB2"
+    settings:
+      'tdb2:unionDefaultGraph': true             ## tdb2:unionDefaultGraph true

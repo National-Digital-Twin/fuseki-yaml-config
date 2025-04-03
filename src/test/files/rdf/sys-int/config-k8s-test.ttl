@@ -1,0 +1,194 @@
+## SPDX-License-Identifier: Apache-2.0
+## Originally developed by Telicent Ltd.; subsequently adapted, enhanced, and maintained by the National Digital Twin Programme.
+##
+##  Copyright (c) Telicent Ltd.
+##
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
+##
+##      http://www.apache.org/licenses/LICENSE-2.0
+##
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
+##
+##
+##  Modifications made by the National Digital Twin Programme (NDTP)
+##  © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
+##  and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
+
+PREFIX :        <#>
+PREFIX authz:   <http://ndtp.co.uk/security#>
+PREFIX cqrs:    <http://ndtp.co.uk/cqrs#>
+PREFIX fk:      <http://jena.apache.org/fuseki/kafka#>
+PREFIX fuseki:  <http://jena.apache.org/fuseki#>
+PREFIX graphql: <https://ndtp.co.uk/fuseki/modules/graphql#>
+PREFIX ja:      <http://jena.hpl.hp.com/2005/11/Assembler#>
+PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX tdb2:    <http://jena.apache.org/2016/tdb#>
+
+:connector3  rdf:type         fk:Connector;
+        fk:bootstrapServers   "b-3.systemintegrationmskcl.7nvqus.c2.kafka.eu-west-2.amazonaws.com:9096,b-1.systemintegrationmskcl.7nvqus.c2.kafka.eu-west-2.amazonaws.com:9096,b-2.systemintegrationmskcl.7nvqus.c2.kafka.eu-west-2.amazonaws.com:9096";
+        fk:configFile         "env:{KAFKA_CONFIG_FILE_PATH:}";
+        fk:fusekiServiceName  "/catalog/upload";
+        fk:groupId            "";
+        fk:replayTopic        false;
+        fk:stateFile          "/fuseki/databases/Replay-RDF.state";
+        fk:topic              "catalog" .
+
+:datasetAuthBase  rdf:type  tdb2:DatasetTDB2;
+        tdb2:location  "/fuseki/databases/knowledge" .
+
+:datasetOntoBase  rdf:type  tdb2:DatasetTDB2;
+        tdb2:location  "/fuseki/databases/ontology" .
+
+:service2  rdf:type      fuseki:Service;
+        fuseki:dataset   :ontologyDataset;
+        fuseki:endpoint  [ fuseki:name       "get";
+                           fuseki:operation  fuseki:gsp-r
+                         ];
+        fuseki:endpoint  [ fuseki:name       "graphql";
+                           fuseki:operation  graphql:graphql;
+                           ja:context        [ ja:cxtName   "ja:cxtValue" , "ja:cxtName";
+                                               ja:cxtValue  "uk.gov.dbt.ndtp.jena.graphql.execution.ianode.graph.IANodeGraphExecutor" , "graphql:executor"
+                                             ]
+                         ];
+        fuseki:endpoint  [ fuseki:name       "query";
+                           fuseki:operation  fuseki:query
+                         ];
+        fuseki:endpoint  [ fuseki:name       "sparql";
+                           fuseki:operation  fuseki:query
+                         ];
+        fuseki:endpoint  [ fuseki:name       "update";
+                           fuseki:operation  cqrs:update;
+                           ja:context        [ ja:cxtName   "ja:cxtValue" , "ja:cxtName";
+                                               ja:cxtValue  "ontology" , "kafka:topic"
+                                             ]
+                         ];
+        fuseki:endpoint  [ fuseki:operation  fuseki:query ];
+        fuseki:endpoint  [ fuseki:name       "upload";
+                           fuseki:operation  authz:upload
+                         ];
+        fuseki:name      "ontology" .
+
+:connector2  rdf:type         fk:Connector;
+        fk:bootstrapServers   "b-3.systemintegrationmskcl.7nvqus.c2.kafka.eu-west-2.amazonaws.com:9096,b-1.systemintegrationmskcl.7nvqus.c2.kafka.eu-west-2.amazonaws.com:9096,b-2.systemintegrationmskcl.7nvqus.c2.kafka.eu-west-2.amazonaws.com:9096";
+        fk:configFile         "env:{KAFKA_CONFIG_FILE_PATH:}";
+        fk:fusekiServiceName  "/ontology/upload";
+        fk:groupId            "";
+        fk:replayTopic        false;
+        fk:stateFile          "/fuseki/databases/Replay-RDF.state";
+        fk:topic              "ontology" .
+
+:datasetCatBase  rdf:type  tdb2:DatasetTDB2;
+        tdb2:location  "/fuseki/databases/catalog" .
+
+:ontologyDataset  rdf:type         authz:DatasetAuthz;
+        authz:attributesURL        "env:{USER_ATTRIBUTES_URL}";
+        authz:cache                false;
+        authz:dataset              :datasetOntoBase;
+        authz:hierarchiesURL       "env:{ATTRIBUTE_HIERARCHY_URL}";
+        authz:labelsStore          [ authz:labelsStorePath
+                          "/fuseki/databases/knowledgeLabels.db" ];
+        authz:tripleDefaultLabels  "!" .
+
+:datasetAuth  rdf:type             authz:DatasetAuthz;
+        authz:attributesURL        "env:{USER_ATTRIBUTES_URL}";
+        authz:cache                false;
+        authz:dataset              :datasetAuthBase;
+        authz:hierarchiesURL       "env:{ATTRIBUTE_HIERARCHY_URL}";
+        authz:labelsStore          [ authz:labelsStorePath
+                          "/fuseki/databases/ontologyLabels.db" ];
+        authz:tripleDefaultLabels  "!" .
+
+:service1  rdf:type      fuseki:Service;
+        fuseki:dataset   :datasetAuth;
+        fuseki:endpoint  [ fuseki:name       "upload";
+                           fuseki:operation  authz:upload
+                         ];
+        fuseki:endpoint  [ fuseki:name       "get";
+                           fuseki:operation  fuseki:gsp-r
+                         ];
+        fuseki:endpoint  [ fuseki:name       "graphql";
+                           fuseki:operation  graphql:graphql;
+                           ja:context        [ ja:cxtName   "ja:cxtValue" , "ja:cxtName";
+                                               ja:cxtValue  "uk.gov.dbt.ndtp.jena.graphql.execution.ianode.graph.IANodeGraphExecutor" , "graphql:executor"
+                                             ]
+                         ];
+        fuseki:endpoint  [ fuseki:name       "update";
+                           fuseki:operation  cqrs:update;
+                           ja:context        [ ja:cxtName   "ja:cxtValue" , "ja:cxtName";
+                                               ja:cxtValue  "knowledge" , "kafka:topic"
+                                             ]
+                         ];
+        fuseki:endpoint  [ fuseki:name       "query";
+                           fuseki:operation  fuseki:query;
+                           ja:context        [ ja:cxtName   "ja:cxtValue" , "ja:cxtName";
+                                               ja:cxtValue  "120000,120000" , "arq:queryTimeout"
+                                             ]
+                         ];
+        fuseki:endpoint  [ fuseki:name       "sparql";
+                           fuseki:operation  fuseki:query;
+                           ja:context        [ ja:cxtName   "ja:cxtValue" , "ja:cxtName";
+                                               ja:cxtValue  "120000,120000" , "arq:queryTimeout"
+                                             ]
+                         ];
+        fuseki:name      "knowledge" .
+
+[ rdf:type         fuseki:Server;
+  fuseki:name      "Server";
+  fuseki:services  ( :service1 :service2 :service3 )
+] .
+
+:catalogDataset  rdf:type          authz:DatasetAuthz;
+        authz:attributesURL        "env:{USER_ATTRIBUTES_URL}";
+        authz:cache                false;
+        authz:dataset              :datasetCatBase;
+        authz:hierarchiesURL       "env:{ATTRIBUTE_HIERARCHY_URL}";
+        authz:labelsStore          [ authz:labelsStorePath
+                          "/fuseki/databases/catalogLabels.db" ];
+        authz:tripleDefaultLabels  "!" .
+
+:connector1  rdf:type         fk:Connector;
+        fk:bootstrapServers   "b-3.systemintegrationmskcl.7nvqus.c2.kafka.eu-west-2.amazonaws.com:9096,b-1.systemintegrationmskcl.7nvqus.c2.kafka.eu-west-2.amazonaws.com:9096,b-2.systemintegrationmskcl.7nvqus.c2.kafka.eu-west-2.amazonaws.com:9096";
+        fk:configFile         "env:{KAFKA_CONFIG_FILE_PATH:}";
+        fk:fusekiServiceName  "/knowledge/upload";
+        fk:groupId            "";
+        fk:replayTopic        false;
+        fk:stateFile          "/fuseki/databases/Replay-RDF.state";
+        fk:topic              "knowledge" .
+
+:service3  rdf:type      fuseki:Service;
+        fuseki:dataset   :catalogDataset;
+        fuseki:endpoint  [ fuseki:name       "get";
+                           fuseki:operation  fuseki:gsp-r
+                         ];
+        fuseki:endpoint  [ fuseki:name       "update";
+                           fuseki:operation  cqrs:update;
+                           ja:context        [ ja:cxtName   "ja:cxtValue" , "ja:cxtName";
+                                               ja:cxtValue  "catalog" , "kafka:topic"
+                                             ]
+                         ];
+        fuseki:endpoint  [ fuseki:name       "graphql";
+                           fuseki:operation  graphql:graphql;
+                           ja:context        [ ja:cxtName   "ja:cxtValue" , "ja:cxtName";
+                                               ja:cxtValue  "uk.gov.dbt.ndtp.jena.graphql.execution.ianode.graph.IANodeGraphExecutor" , "graphql:executor"
+                                             ]
+                         ];
+        fuseki:endpoint  [ fuseki:name       "upload";
+                           fuseki:operation  authz:upload
+                         ];
+        fuseki:endpoint  [ fuseki:name       "shacl";
+                           fuseki:operation  fuseki:shacl
+                         ];
+        fuseki:endpoint  [ fuseki:name       "query";
+                           fuseki:operation  fuseki:query
+                         ];
+        fuseki:endpoint  [ fuseki:operation  fuseki:query ];
+        fuseki:endpoint  [ fuseki:name       "sparql";
+                           fuseki:operation  fuseki:query
+                         ];
+        fuseki:name      "catalog" .

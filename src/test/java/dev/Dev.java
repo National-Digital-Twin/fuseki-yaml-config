@@ -1,0 +1,136 @@
+// SPDX-License-Identifier: Apache-2.0
+// Originally developed by Telicent Ltd.; subsequently adapted, enhanced, and maintained by the National Digital Twin Programme.
+/*
+ *  Copyright (c) Telicent Ltd.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+/*
+ *  Modifications made by the National Digital Twin Programme (NDTP)
+ *  © Crown Copyright 2025. This work has been developed by the National Digital Twin Programme
+ *  and is legally attributed to the Department for Business and Trade (UK) as the governing entity.
+ */
+
+package dev;
+
+import uk.gov.dbt.ndtp.jena.abac.lib.Attributes;
+import uk.gov.dbt.ndtp.jena.abac.lib.AttributesStore;
+import uk.gov.dbt.ndtp.jena.abac.fuseki.FMod_ABAC;
+import uk.gov.dbt.ndtp.jena.abac.services.AttributeService;
+import uk.gov.dbt.ndtp.jena.abac.services.SimpleAttributesStore;
+import org.apache.jena.atlas.lib.FileOps;
+import org.apache.jena.fuseki.main.FusekiServer;
+import org.apache.jena.fuseki.main.sys.FusekiModule;
+import org.apache.jena.fuseki.main.sys.FusekiModules;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFParser;
+import org.apache.jena.sparql.exec.RowSetOps;
+import org.apache.jena.sparql.exec.RowSetRewindable;
+import org.apache.jena.sparql.exec.http.DSP;
+import org.apache.jena.sparql.exec.http.QueryExecHTTPBuilder;
+import org.apache.jena.sys.JenaSystem;
+import yamlconfig.ConfigStruct;
+import yamlconfig.RDFConfigGenerator;
+import yamlconfig.YAMLConfigParser;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import static uk.gov.dbt.ndtp.jena.abac.services.LibAuthService.serviceURL;
+import static yamlconfig.ConfigConstants.log;
+
+public class Dev {
+    private static final String DIR = "src/main/files/";
+    private static final String SERVICE_NAME = "/ds";
+
+    public static void main(String ...args) {
+        JenaSystem.init();
+
+        Graph g = RDFParser.source(DIR+"abac/attribute-store.ttl").toGraph();
+        AttributesStore attrStore = Attributes.buildStore(g);
+        String mockServerURL = SimpleAttributesStore.run(0, attrStore);
+
+        String lookupUserAttributesURL = serviceURL(mockServerURL, AttributeService.LOOKUP_USER_ATTRIBUTE_TEMPLATE);
+        System.setProperty("USER_ATTRIBUTES_URL", lookupUserAttributesURL);
+
+        YAMLConfigParser ycp = new YAMLConfigParser();
+        RDFConfigGenerator rcg = new RDFConfigGenerator();
+        try {
+            ConfigStruct config2 = ycp.runYAMLParser("src/main/files/config-abac-tdb2.yaml");
+            Model model2 = rcg.createRDFModel(config2);
+            model2.write(System.out, "TTL");
+            try (FileOutputStream out = new FileOutputStream("src/main/files/config.ttl")) {
+                model2.write(out, "TTL");
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
+            log.info(config2.toString());
+            FusekiServer server2 = server("config.ttl");
+            server2.start();
+            log.info("Server started");
+            load(server2);
+            query(server2, "u1"); // 3
+            query(server2, "u2"); // 2
+            server2.stop();
+        }
+        catch (RuntimeException ex) {
+            log.error(ex.getMessage());
+        }
+        System.exit(0);
+
+    }
+
+    private static void load(FusekiServer server) {
+        String URL = "http://localhost:" + server.getPort() + SERVICE_NAME;
+        String uploadURL = URL + "/upload";
+        load(uploadURL, DIR + "abac/data-and-labels.trig");
+    }
+
+    private static void query(FusekiServer server, String user) {
+        String URL = "http://localhost:" + server.getPort() + SERVICE_NAME;
+        query(URL, user);
+    }
+
+    private static void load(String uploadURL, String filename) {
+        DSP.service(uploadURL).POST(filename);
+    }
+
+    private static void query(String url, String user) {
+        String queryString = "SELECT * { ?s ?p ?o }";
+        query(url, user, queryString);
+    }
+
+    private static void query(String url, String user, String queryString) {
+        System.out.println("Query: " + user);
+        RowSetRewindable rowSet =
+                QueryExecHTTPBuilder.service(url)
+                        .query(queryString)
+                        .httpHeader("Authorization", "Bearer user:" + user)
+                        .select()
+                        .rewindable();
+        long x = RowSetOps.count(rowSet);
+        System.out.printf("User = %s ; returned %d results\n", user, x);
+        rowSet.reset();
+        RowSetOps.out(System.out, rowSet);
+    }
+
+    private static FusekiServer server(String config) {
+        FusekiModule fmod = new FMod_ABAC();
+        FusekiModules mods = FusekiModules.create(fmod);
+        return FusekiServer.create().port(3131)
+                .fusekiModules(mods)
+                .parseConfigFile(FileOps.concatPaths(DIR, config))
+                .build();
+    }
+}
