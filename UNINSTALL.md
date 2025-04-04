@@ -1,6 +1,6 @@
 # Uninstall
-**Repository:** `fuseki-yaml-config`
 
+**Repository:** `fuseki-yaml-config`    
 **Description:** `This file provides detailed steps to remove this repository, including any dependencies and configurations for fuseki-yaml-config.`
 
 <!-- SPDX-License-Identifier: OGL-UK-3.0 -->
