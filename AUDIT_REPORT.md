@@ -1,10 +1,9 @@
 # Open-Source Compliance & Code Audit Report
-# SPDX-License-Identifier: OGL-UK-3.0
 
 **Repository:** `fuseki-yaml-config`  
 **Date of Last Audit:** `2025-03-21`  
 **Reviewed By:** `Kainos Software`
-
+<!-- SPDX-License-Identifier: OGL-UK-3.0 -->
 ---
 
 ## Overview
