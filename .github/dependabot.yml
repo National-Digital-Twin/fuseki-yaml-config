@@ -20,6 +20,7 @@
 ##  All support, maintenance and further development of this code is now the responsibility
 ##  of the National Digital Twin Programme.
 
+
 version: 2
 updates:
   - package-ecosystem: "maven"
