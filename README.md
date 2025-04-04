@@ -9,7 +9,7 @@ This repository contributes to the development of **secure, scalable, and intero
 
 This repository is one of several open-source components that underpin NDTP’s **Integration Architecture (IA)**—a framework designed to allow organisations to manage and exchange data securely while maintaining control over their own information. The IA is actively deployed and tested across multiple sectors, ensuring its adaptability and alignment with real-world needs.
 
-For a complete overview of the Integration Architecture (IA) project, please see the [Integration Architecture Documentation](https://github.com/National-Digital-Twin/integration-architecture-documentation)
+For a complete overview of the Integration Architecture (IA) project, please see the [Integration Architecture Documentation](https://github.com/National-Digital-Twin/integration-architecture-documentation).
 
 ## Prerequisites
 Before using this repository, ensure you have the following dependencies installed:
@@ -41,17 +41,17 @@ Refer to [INSTALLATION.md](INSTALLATION.md) for detailed installation steps, inc
 For steps to remove this repository and its dependencies, see [UNINSTALL.md](UNINSTALL.md).
 
 ## Features
-- **Core functionality**
+- **Key functionality**
     - A library project for translating YAML files to standard Apache Fuseki config files.
 - **Key integrations**
-    - N/A
+    - N/A.
 - **Scalability & performance**
-    - N/A
+    - N/A.
 - **Modularity**
-    - N/A
+    - N/A.
 
 ## Documentation
-Refer to [Documentation](documentation.md)
+Refer to [Documentation](documentation.md).
 
 ## Public Funding Acknowledgment
 This repository has been developed with public funding as part of the National Digital Twin Programme (NDTP), a UK Government initiative. NDTP, alongside its partners, has invested in this work to advance open, secure, and reusable digital twin technologies for any organisation, whether from the public or private sector, irrespective of size.
