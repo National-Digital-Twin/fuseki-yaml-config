@@ -23,7 +23,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - Placeholder for upcoming features and enhancements.
 
 ### Fixed
-- Placeholder for bug fixes and security updates.
+- Remove superfluous command from [installation](/INSTALLATION.md) guide.
 
 ### Changed
 - Placeholder for changes to existing functionality.
