@@ -23,7 +23,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 - Placeholder for upcoming features and enhancements.
 
 ### Fixed
-- Placeholder for bug fixes and security updates.
+- Fix failing unit test for bad yaml config in [TestYAMLConfigParser.java](src/test/java/yamlconfig/TestYAMLConfigParser.java).
 
 ### Changed
 - Placeholder for changes to existing functionality.
