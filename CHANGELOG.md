@@ -24,6 +24,7 @@ This project follows **Semantic Versioning (SemVer)** ([semver.org](https://semv
 
 ### Fixed
 - Fix failing unit test for bad yaml config in [TestYAMLConfigParser.java](src/test/java/yamlconfig/TestYAMLConfigParser.java).
+- Remove superfluous command from [installation](/INSTALLATION.md) guide.
 
 ### Changed
 - Placeholder for changes to existing functionality.
